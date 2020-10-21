@@ -1,15 +1,13 @@
-from meal import Meal
+from WeeklyMealPlanner.data.meal import Meal
+
 
 class Day:
     breakfast: Meal
     supper: Meal
-    daily_cost: int = 0
 
     def __init__(self, breakfast: Meal, supper: Meal) -> None:
         self.breakfast = breakfast
         self.supper = supper
 
-    def daily_price(self) -> int:
-        
-        
-        return 0
+    def daily_cost(self) -> float:
+        return self.breakfast.meal_price() + self.supper.meal_price()
