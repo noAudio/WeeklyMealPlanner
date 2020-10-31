@@ -1,7 +1,7 @@
 from WeeklyMealPlanner.logic.data.foods import Food, FoodType, FoodClass
-from typing import Any, Dict, List
+from typing import Dict, List
 
-all_foods: List[Dict[str, Any]] = [
+all_foods: List[Dict[str, str or FoodType or FoodClass or int]] = [
     {
         'id': 'f1',
         'name': 'Rice',
