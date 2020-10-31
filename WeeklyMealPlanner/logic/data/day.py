@@ -1,4 +1,4 @@
-from WeeklyMealPlanner.data.meal import Meal
+from WeeklyMealPlanner.logic.data.meal import Meal
 
 
 class Day:

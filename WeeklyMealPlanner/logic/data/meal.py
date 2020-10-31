@@ -1,5 +1,14 @@
-from WeeklyMealPlanner.data.foods import Food
+from WeeklyMealPlanner.logic.data.foods import Food
 
+'''
+    Attributes:
+        combo_id: str (unique id for food combinations)
+        primary_food: Food (a primary food)
+        secondary_food: Food (a secondary food)
+        _condiments_price: float (a constant price for condiments)
+    Methods:
+        meal_price() -> float (calculates total price of the meal)
+'''
 class Meal:
     combo_id: str
     primary_food: Food
