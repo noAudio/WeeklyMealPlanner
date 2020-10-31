@@ -49,6 +49,9 @@ class DbAccess:
             error: str = f'Error: "{e}". Unable to create table!'
             # print(error)
             return error
+        except sqlite3.IntegrityError as e:
+            error: str = f'Error: "{e}". Table already exists!'
+            return error
     
     def delete_month(self, month: str, year: int) -> str:
         '''
@@ -69,20 +72,24 @@ class DbAccess:
             error: str = f'Error: "{e}". Unable to perform delete operation!'
             print(error)
             return error
+
     def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int) -> str:
         '''
         '''
         self.__connect_to_db__()
-        self.create_month(month=month, year=year)
-        self.cmd.execute(
-            f'''
-            INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
-            VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
-            '''
-        )
-        self.connection.commit()
-        self.connection.close()
-        return ''
+        create: str = self.create_month(month=month, year=year)
+        if 'Error' in create:
+            return create
+        else:
+            self.cmd.execute(
+                f'''
+                INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
+                VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
+                '''
+            )
+            self.connection.commit()
+            self.connection.close()
+            return ''
         
     def add_food(self, food: Dict[str, Any]) -> str:
         '''
@@ -146,12 +153,28 @@ class DbAccess:
         self.connection.commit()
         self.connection.close()
         return foods
+    
+    def specified_day_meals(self, date: int, month: str, year: int) -> Tuple[str or float]:
+        '''
+        Find records based on a given date.
+        '''
+        self.table_name = f'{month}_{year}'
+        self.__connect_to_db__()
+        self.cmd.execute(
+            f'''
+            SELECT *
+            FROM {self.table_name}
+            WHERE date = '{date}'
+            '''
+        )
+        meal: Tuple[str or float] = self.cmd.fetchone()
+        self.connection.commit()
+        self.connection.close()
+        return meal
 
 db_access: DbAccess = DbAccess()
 suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Supper')
-print(suppers)
 breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
-print(breakfasts)
 
 from random import randint
 def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
@@ -190,11 +213,10 @@ while date <= total_days:
         'supper_price': supper_primary[1] + supper_secondary[1],
         'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1],
     }
-    db_access.add_food_to_month(meal=meal, month='October', year=2020)
+    msg: str = db_access.add_food_to_month(meal=meal, month='October', year=2020)
+    if 'Error' in msg:
+        print(msg, '\nBreaking operation')
+        break
     date += 1
 
-meal: Dict[str, Any] = {
-    'date': 20,
-    'day': 'Monday',
-    'breakfast_primary': breakfast_primaries[randint(0, len(breakfast_primaries) - 1)]
-}
+print(db_access.specified_day_meals(date=12, month='October', year=2020))
