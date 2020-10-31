@@ -25,6 +25,7 @@ class DbAccess:
         Parameters are Month and Year which are concatenated to make a table name.
         '''
         self.table_name = f'{month}_{year}'
+        self.__connect_to_db__()
         try:
             self.cmd.execute(
             f'''
@@ -68,13 +69,26 @@ class DbAccess:
             error: str = f'Error: "{e}". Unable to perform delete operation!'
             print(error)
             return error
+    def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int) -> str:
+        '''
+        '''
+        self.__connect_to_db__()
+        self.create_month(month=month, year=year)
+        self.cmd.execute(
+            f'''
+            INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
+            VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
+            '''
+        )
+        self.connection.commit()
+        self.connection.close()
+        return ''
         
     def add_food(self, food: Dict[str, Any]) -> str:
         '''
         Add a food to the db.
         Accepts a dictionary with food properties which are then added as an entry.
         '''
-        self.table_name = f'Foods'
         try:
             self.cmd.execute(
                 f'''
@@ -120,7 +134,7 @@ class DbAccess:
         return f'Succesfully edited food.'
     
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
-
+        self.__connect_to_db__()
         self.cmd.execute(
             f'''
             SELECT *
@@ -128,8 +142,59 @@ class DbAccess:
             WHERE food_type = '{food_type}'
             '''
         )
-
-        return self.cmd.fetchall()
+        foods: List[Tuple[str or float]] = self.cmd.fetchall()
+        self.connection.commit()
+        self.connection.close()
+        return foods
 
 db_access: DbAccess = DbAccess()
-print(db_access.foods_by_foodtype(food_type='FoodType.Breakfast'))
+suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Supper')
+print(suppers)
+breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
+print(breakfasts)
+
+from random import randint
+def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
+    sorted_foods: List[Tuple[str or float]] = []
+    for food in foods:
+        if food[3] == food_class:
+            sorted_foods.append(food)
+    return sorted_foods
+breakfast_primaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Primary')
+breakfast_secondaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Secondary')
+supper_primaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Primary')
+supper_secondaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Secondary')
+
+def random_food(list: List[Tuple[str or float]]) -> List[Any]:
+    food: Tuple[str or float] = list[randint(0, len(list) - 1)]
+    food_name: str = food[1]
+    food_price: float = food[4]
+    return [food_name, food_price]
+
+total_days: int = 30
+date: int = 1
+
+while date <= total_days:
+    breakfast_primary = random_food(breakfast_primaries)
+    breakfast_secondary = random_food(breakfast_secondaries)
+    supper_primary = random_food(supper_primaries)
+    supper_secondary = random_food(supper_secondaries)
+    meal: Dict[str, Any] = {
+        'date': date,
+        'day': 'Monday',
+        'breakfast_primary': breakfast_primary[0],
+        'breakfast_secondary': breakfast_secondary[0],
+        'breakfast_price': breakfast_primary[1] + breakfast_secondary[1],
+        'supper_primary': supper_primary[0],
+        'supper_secondary': supper_secondary[0],
+        'supper_price': supper_primary[1] + supper_secondary[1],
+        'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1],
+    }
+    db_access.add_food_to_month(meal=meal, month='October', year=2020)
+    date += 1
+
+meal: Dict[str, Any] = {
+    'date': 20,
+    'day': 'Monday',
+    'breakfast_primary': breakfast_primaries[randint(0, len(breakfast_primaries) - 1)]
+}
