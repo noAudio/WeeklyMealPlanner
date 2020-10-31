@@ -2,7 +2,7 @@
 from sqlite3 import connect
 import sqlite3
 from sqlite3.dbapi2 import Connection, Cursor
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 class DbAccess:
     connection: Connection
@@ -13,6 +13,9 @@ class DbAccess:
         '''
         Access the db to read, add, update, delete and/or remove tables and table entries
         '''
+        self.__connect_to_db__()
+    
+    def __connect_to_db__(self) -> None:
         self.connection: Connection = connect('foods.db')
         self.cmd: Cursor = self.connection.cursor()
 
@@ -115,22 +118,18 @@ class DbAccess:
         self.connection.commit()
         self.connection.close()
         return f'Succesfully edited food.'
+    
+    def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
+
+        self.cmd.execute(
+            f'''
+            SELECT *
+            FROM Foods
+            WHERE food_type = '{food_type}'
+            '''
+        )
+
+        return self.cmd.fetchall()
 
 db_access: DbAccess = DbAccess()
-
-food: Dict[str, Any] = {
-    'id': 'f1',
-    'name': 'Rice',
-    'food_type': 'FoodType.Supper',
-    'food_class': 'FoodClass.Primary',
-    'price': 50,
-}
-
-new_food: Dict[str, Any] = {
-    'name': 'Mchele',
-    'food_type': 'FoodType.Supper',
-    'food_class': 'FoodClass.Primary',
-    'price': 100,
-}
-
-print(db_access.edit_food(id='f10', food=new_food))
+print(db_access.foods_by_foodtype(food_type='FoodType.Breakfast'))
