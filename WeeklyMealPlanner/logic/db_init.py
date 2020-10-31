@@ -17,16 +17,16 @@ cmd.execute(
 )
 cmd.execute(
     '''
-    CREATE TABLE Week (
-        id VARCHAR PRIMARY KEY,
-        sunday VARCHAR,
-        monday VARCHAR,
-        tuesday VARCHAR,
-        wednesday VARCHAR,
-        thursday VARCHAR,
-        friday VARCHAR,
-        saturday VARCHAR,
-        total_cost FLOAT
+    CREATE TABLE November_2020 (
+        date INTEGER PRIMARY KEY,
+        day VARCHAR,
+        breakfast_primary VARCHAR,
+        breakfast_secondary VARCHAR,
+        breakfast_price FLOAT,
+        supper_primary VARCHAR,
+        supper_secondary VARCHAR,
+        supper_price FLOAT,
+        day_price FLOAT
     )
     '''
 )
