@@ -12,11 +12,16 @@ class DbAccess:
         self.connection: Connection = connect('foods.db')
         self.cmd: Cursor = self.connection.cursor()
 
-    def create_table(self, month: str, year: int) -> None:
-        ''' Create a new table in the Foods db. '''
-        self.cmd.execute(
+    def create_table(self, month: str, year: int) -> str:
+        '''
+        Create a new table in the db.
+        Parameters are Month and Year which are concatenated to make a table name.
+        '''
+        self.table_name = f'{month}_{year}'
+        try:
+            self.cmd.execute(
             f'''
-            CREATE TABLE {month}_{year} (
+            CREATE TABLE {self.table_name} (
                 date INTEGER PRIMARY KEY,
                 day VARCHAR,
                 breakfast_primary VARCHAR,
@@ -28,21 +33,26 @@ class DbAccess:
                 day_price FLOAT
             )
             '''
-        )
+            )
+            return f'Success! Table "{self.table_name}" has been created.'
+        except sqlite3.OperationalError as e:
+            error: str = f'Error: "{e}". Unable to create table!'
+            # print(error)
+            return error
     
     def delete_table(self, month: str, year: int) -> str:
         '''
-            Delete a specified table from the db.
-            Parameters are Month and Year which are concatenated to make a table name.
+        Delete a specified table from the db.
+        Parameters are Month and Year which are concatenated to make the table name.
         '''
-        self.table_name: str = f'{month}_{year}'
+        self.table_name = f'{month}_{year}'
         try:
             self.cmd.execute(
                 f'''
-                    DROP TABLE {self.table_name}
+                DROP TABLE {self.table_name}
                 '''
             )
-            return f'Success! Table {self.table_name} has been created.'
+            return f'Success! Table "{self.table_name}" has been deleted.'
         except sqlite3.OperationalError as e:
             error: str = f'Error: "{e}". Unable to perform delete operation!'
             print(error)
@@ -51,5 +61,5 @@ class DbAccess:
 
 db_access: DbAccess = DbAccess()
 
-# db_access.create_table(month='January', year=2020)
-db_access.delete_table(month='January', year=2020)
+# print(db_access.create_table(month='January', year=2020))
+# db_access.delete_table(month='January', year=2020)
