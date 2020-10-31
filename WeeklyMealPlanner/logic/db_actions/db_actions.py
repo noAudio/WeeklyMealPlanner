@@ -1,6 +1,8 @@
+# from WeeklyMealPlanner.logic.data.foods import FoodClass, FoodType
 from sqlite3 import connect
 import sqlite3
 from sqlite3.dbapi2 import Connection, Cursor
+from typing import Any, Dict
 
 class DbAccess:
     connection: Connection
@@ -8,11 +10,13 @@ class DbAccess:
     table_name: str
 
     def __init__(self) -> None:
-        ''' Access the db to read, add, update, delete and/or remove tables and table entries '''
+        '''
+        Access the db to read, add, update, delete and/or remove tables and table entries
+        '''
         self.connection: Connection = connect('foods.db')
         self.cmd: Cursor = self.connection.cursor()
 
-    def create_table(self, month: str, year: int) -> str:
+    def create_month(self, month: str, year: int) -> str:
         '''
         Create a new table in the db.
         Parameters are Month and Year which are concatenated to make a table name.
@@ -34,13 +38,15 @@ class DbAccess:
             )
             '''
             )
+            self.connection.commit()
+            self.connection.close()
             return f'Success! Table "{self.table_name}" has been created.'
         except sqlite3.OperationalError as e:
             error: str = f'Error: "{e}". Unable to create table!'
             # print(error)
             return error
     
-    def delete_table(self, month: str, year: int) -> str:
+    def delete_month(self, month: str, year: int) -> str:
         '''
         Delete a specified table from the db.
         Parameters are Month and Year which are concatenated to make the table name.
@@ -52,14 +58,79 @@ class DbAccess:
                 DROP TABLE {self.table_name}
                 '''
             )
+            self.connection.commit()
+            self.connection.close()
             return f'Success! Table "{self.table_name}" has been deleted.'
         except sqlite3.OperationalError as e:
             error: str = f'Error: "{e}". Unable to perform delete operation!'
             print(error)
             return error
         
+    def add_food(self, food: Dict[str, Any]) -> str:
+        '''
+        Add a food to the db.
+        Accepts a dictionary with food properties which are then added as an entry.
+        '''
+        self.table_name = f'Foods'
+        try:
+            self.cmd.execute(
+                f'''
+                INSERT INTO Foods (id, name, food_type, food_class, price)
+                VALUES ('{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]})
+                '''
+            )
+            self.connection.commit()
+            self.connection.close()
+            return f'Success! Added food item "{food["name"]}".'
+        except sqlite3.OperationalError as e:
+            return f'Error "{e}". Unable to update entry!'
+        
+    def delete_food(self, id: str, name: str) -> str:
+        '''
+        Delete a food from the db.
+        Accepts the name and id of the food to be deleted.
+        '''
+        self.cmd.execute(
+            f'''
+            DELETE FROM Foods
+            WHERE id = '{id}'
+            '''
+        )
+        self.connection.commit()
+        self.connection.close()
+        return f'Succesfully deleted {name}.'
+    
+    def edit_food(self, id: str, food: Any) -> str:
+        '''
+        Edit a food in the db.
+        Accepts the id of the food to be deleted and a dictionary of the new food values.
+        '''
+        self.cmd.execute(
+            f'''
+            UPDATE Foods
+            SET name = '{food["name"]}', food_type = '{food["food_type"]}', food_class = '{food["food_class"]}', price = '{food["price"]}'
+            WHERE id = '{id}'
+            '''
+        )
+        self.connection.commit()
+        self.connection.close()
+        return f'Succesfully edited food.'
 
 db_access: DbAccess = DbAccess()
 
-# print(db_access.create_table(month='January', year=2020))
-# db_access.delete_table(month='January', year=2020)
+food: Dict[str, Any] = {
+    'id': 'f1',
+    'name': 'Rice',
+    'food_type': 'FoodType.Supper',
+    'food_class': 'FoodClass.Primary',
+    'price': 50,
+}
+
+new_food: Dict[str, Any] = {
+    'name': 'Mchele',
+    'food_type': 'FoodType.Supper',
+    'food_class': 'FoodClass.Primary',
+    'price': 100,
+}
+
+print(db_access.edit_food(id='f10', food=new_food))
