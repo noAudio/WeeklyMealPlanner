@@ -16,6 +16,9 @@ class DbAccess:
         self.__connect_to_db__()
     
     def __connect_to_db__(self) -> None:
+        '''
+            Instantiate a connection to the database.
+        '''
         self.connection: Connection = connect('foods.db')
         self.cmd: Cursor = self.connection.cursor()
 
@@ -29,7 +32,7 @@ class DbAccess:
         try:
             self.cmd.execute(
             f'''
-            CREATE TABLE {self.table_name} (
+            CREATE TABLE IF NOT EXISTS {self.table_name} (
                 date INTEGER PRIMARY KEY,
                 day VARCHAR,
                 breakfast_primary VARCHAR,
@@ -73,23 +76,33 @@ class DbAccess:
             print(error)
             return error
 
-    def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int) -> str:
+    def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int):
         '''
+        Add an entry for daily meals to the pecific month's table. Pass in a meal, the desired month and year.
         '''
-        self.__connect_to_db__()
         create: str = self.create_month(month=month, year=year)
+        self.__connect_to_db__()
         if 'Error' in create:
-            return create
-        else:
-            self.cmd.execute(
-                f'''
-                INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
-                VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
-                '''
-            )
-            self.connection.commit()
-            self.connection.close()
-            return ''
+            print(create)
+        self.cmd.execute(
+            f'''
+            INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
+            VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
+            '''
+        )
+        self.connection.commit()
+        self.connection.close()
+    
+    def randomize_schedule(self, month: str) -> None:
+        '''
+            Create a list of random food combinations and pass them into a month table.
+        '''
+        # TODO: 1.Run a check for the month passed in as an argument
+        # TODO: 2.Use a while loop with the number of days in the specified month
+        # TODO: 3.Read the FOOD table and sort foods by categories
+        # TODO: 4.Randomise sorted foods and pass into a list
+        # TODO: 5.Pass data off into a table.
+        pass
         
     def add_food(self, food: Dict[str, Any]) -> str:
         '''
@@ -141,6 +154,9 @@ class DbAccess:
         return f'Succesfully edited food.'
     
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
+        '''
+            Find records based on a specified food type.
+        '''
         self.__connect_to_db__()
         self.cmd.execute(
             f'''
@@ -177,6 +193,7 @@ suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='Food
 breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
 
 from random import randint
+import datetime
 def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
     sorted_foods: List[Tuple[str or float]] = []
     for food in foods:
@@ -197,14 +214,21 @@ def random_food(list: List[Tuple[str or float]]) -> List[Any]:
 total_days: int = 30
 date: int = 1
 
+month = '11'
+year = '2020'
+def what_day(day: str, month: str, year: str) -> str:
+    return datetime.date(int(year), int(month), int(day)).strftime('%A')
+
 while date <= total_days:
     breakfast_primary = random_food(breakfast_primaries)
     breakfast_secondary = random_food(breakfast_secondaries)
     supper_primary = random_food(supper_primaries)
     supper_secondary = random_food(supper_secondaries)
+
+
     meal: Dict[str, Any] = {
         'date': date,
-        'day': 'Monday',
+        'day': what_day(str(date), '11', '2020'),
         'breakfast_primary': breakfast_primary[0],
         'breakfast_secondary': breakfast_secondary[0],
         'breakfast_price': breakfast_primary[1] + breakfast_secondary[1],
@@ -213,10 +237,12 @@ while date <= total_days:
         'supper_price': supper_primary[1] + supper_secondary[1],
         'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1],
     }
-    msg: str = db_access.add_food_to_month(meal=meal, month='October', year=2020)
-    if 'Error' in msg:
-        print(msg, '\nBreaking operation')
-        break
+    db_access.add_food_to_month(meal=meal, month='November', year=2020)
     date += 1
+#%%
+what_day('31', '10', '2020')
 
-print(db_access.specified_day_meals(date=12, month='October', year=2020))
+
+# print(db_access.specified_day_meals(date=12, month='October', year=2020))
+
+# %%

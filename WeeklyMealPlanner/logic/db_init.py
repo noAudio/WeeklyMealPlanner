@@ -15,21 +15,21 @@ cmd.execute(
     )
     '''
 )
-cmd.execute(
-    '''
-    CREATE TABLE November_2020 (
-        date INTEGER PRIMARY KEY,
-        day VARCHAR,
-        breakfast_primary VARCHAR,
-        breakfast_secondary VARCHAR,
-        breakfast_price FLOAT,
-        supper_primary VARCHAR,
-        supper_secondary VARCHAR,
-        supper_price FLOAT,
-        day_price FLOAT
-    )
-    '''
-)
+# cmd.execute(
+#     '''
+#     CREATE TABLE November_2020 (
+#         date INTEGER PRIMARY KEY,
+#         day VARCHAR,
+#         breakfast_primary VARCHAR,
+#         breakfast_secondary VARCHAR,
+#         breakfast_price FLOAT,
+#         supper_primary VARCHAR,
+#         supper_secondary VARCHAR,
+#         supper_price FLOAT,
+#         day_price FLOAT
+#     )
+#     '''
+# )
 
 connection.commit()
 connection.close()
