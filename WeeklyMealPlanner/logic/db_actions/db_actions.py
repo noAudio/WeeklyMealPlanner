@@ -27,16 +27,25 @@ class DBConnection:
         self.cmd: Cursor = self.connection.cursor()
     
     def _commit_disconnect_db(self) -> None:
+        '''
+        Commit changes and close database connection.
+        '''
         self.connection.commit()
         self.connection.close()
 
 class DBCommand(DBConnection):
+    '''
+    Handles command execution in the database.
+    '''
     cmd: Cursor
     
     def __init__(self) -> None:
         self._connect_db()
     
     def _execute(self, command: str) -> None:
+        '''
+        Pass in a command to be executed in the database.
+        '''
         self.cmd.execute(command)
         self._commit_disconnect_db()
 
