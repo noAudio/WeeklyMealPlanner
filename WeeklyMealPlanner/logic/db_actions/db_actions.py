@@ -1,34 +1,52 @@
 # from WeeklyMealPlanner.logic.data.foods import FoodClass, FoodType
-from sqlite3 import connect
-import sqlite3
+from sqlite3 import connect, OperationalError, IntegrityError
 from sqlite3.dbapi2 import Connection, Cursor
 from typing import Any, Dict, List, Tuple
+from random import randint
+import datetime
 
-class DbAccess:
+class DBConnection:
+    '''
+    Establish connection to database.
+    Also allows database commit and disconnection via _commit_disconnect_db().
+    '''
     connection: Connection
     cmd: Cursor
     table_name: str
+    _db: str = 'foods.db'
 
     def __init__(self) -> None:
         '''
         Access the db to read, add, update, delete and/or remove tables and table entries
         '''
-        self.__connect_to_db__()
-    
-    def __connect_to_db__(self) -> None:
+        self._connect_db()
+
+    def _connect_db(self) -> None:
         '''
-            Instantiate a connection to the database.
+        Instantiate a connection to the database.
         '''
-        self.connection: Connection = connect('foods.db')
+        self.connection: Connection = connect(self._db)
         self.cmd: Cursor = self.connection.cursor()
+    
+    def _commit_disconnect_db(self) -> None:
+        self.connection.commit()
+        self.connection.close()
+
+class DbAccess(DBConnection):
+    def __init__(self) -> None:
+        '''
+        Access the db to read, add, update, delete and/or remove tables and table entries
+        '''
+        DBConnection._connect_db(self=self)
 
     def create_month(self, month: str, year: int) -> str:
         '''
         Create a new table in the db.
         Parameters are Month and Year which are concatenated to make a table name.
         '''
+        # TODO: Extract to external class
         self.table_name = f'{month}_{year}'
-        self.__connect_to_db__()
+        DBConnection._connect_db(self=self)
         try:
             self.cmd.execute(
             f'''
@@ -45,14 +63,13 @@ class DbAccess:
             )
             '''
             )
-            self.connection.commit()
-            self.connection.close()
+            DBConnection._commit_disconnect_db(self)
             return f'Success! Table "{self.table_name}" has been created.'
-        except sqlite3.OperationalError as e:
+        except OperationalError as e:
             error: str = f'Error: "{e}". Unable to create table!'
             # print(error)
             return error
-        except sqlite3.IntegrityError as e:
+        except IntegrityError as e:
             error: str = f'Error: "{e}". Table already exists!'
             return error
     
@@ -68,10 +85,9 @@ class DbAccess:
                 DROP TABLE {self.table_name}
                 '''
             )
-            self.connection.commit()
-            self.connection.close()
+            DBConnection._commit_disconnect_db(self)
             return f'Success! Table "{self.table_name}" has been deleted.'
-        except sqlite3.OperationalError as e:
+        except OperationalError as e:
             error: str = f'Error: "{e}". Unable to perform delete operation!'
             print(error)
             return error
@@ -81,7 +97,7 @@ class DbAccess:
         Add an entry for daily meals to the pecific month's table. Pass in a meal, the desired month and year.
         '''
         create: str = self.create_month(month=month, year=year)
-        self.__connect_to_db__()
+        DBConnection._connect_db(self=self)
         if 'Error' in create:
             print(create)
         self.cmd.execute(
@@ -90,14 +106,14 @@ class DbAccess:
             VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
             '''
         )
-        self.connection.commit()
-        self.connection.close()
+        DBConnection._commit_disconnect_db(self)
     
-    def randomize_schedule(self, month: str) -> None:
+    def randomize_schedule(self, date: str) -> None:
         '''
-            Create a list of random food combinations and pass them into a month table.
+         Create a list of random food combinations and pass them into a month table.
         '''
         # TODO: 1.Run a check for the month passed in as an argument
+        # day: str = self._what_day(month=month, year=year)
         # TODO: 2.Use a while loop with the number of days in the specified month
         # TODO: 3.Read the FOOD table and sort foods by categories
         # TODO: 4.Randomise sorted foods and pass into a list
@@ -116,10 +132,9 @@ class DbAccess:
                 VALUES ('{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]})
                 '''
             )
-            self.connection.commit()
-            self.connection.close()
+            DBConnection._commit_disconnect_db(self)
             return f'Success! Added food item "{food["name"]}".'
-        except sqlite3.OperationalError as e:
+        except OperationalError as e:
             return f'Error "{e}". Unable to update entry!'
         
     def delete_food(self, id: str, name: str) -> str:
@@ -133,8 +148,7 @@ class DbAccess:
             WHERE id = '{id}'
             '''
         )
-        self.connection.commit()
-        self.connection.close()
+        DBConnection._commit_disconnect_db(self)
         return f'Succesfully deleted {name}.'
     
     def edit_food(self, id: str, food: Any) -> str:
@@ -149,15 +163,14 @@ class DbAccess:
             WHERE id = '{id}'
             '''
         )
-        self.connection.commit()
-        self.connection.close()
+        DBConnection._commit_disconnect_db(self)
         return f'Succesfully edited food.'
     
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
         '''
-            Find records based on a specified food type.
+        Find records based on a specified food type.
         '''
-        self.__connect_to_db__()
+        DBConnection._connect_db(self=self)
         self.cmd.execute(
             f'''
             SELECT *
@@ -166,8 +179,7 @@ class DbAccess:
             '''
         )
         foods: List[Tuple[str or float]] = self.cmd.fetchall()
-        self.connection.commit()
-        self.connection.close()
+        DBConnection._commit_disconnect_db(self)
         return foods
     
     def specified_day_meals(self, date: int, month: str, year: int) -> Tuple[str or float]:
@@ -175,7 +187,7 @@ class DbAccess:
         Find records based on a given date.
         '''
         self.table_name = f'{month}_{year}'
-        self.__connect_to_db__()
+        DBConnection._connect_db(self=self)
         self.cmd.execute(
             f'''
             SELECT *
@@ -184,16 +196,21 @@ class DbAccess:
             '''
         )
         meal: Tuple[str or float] = self.cmd.fetchone()
-        self.connection.commit()
-        self.connection.close()
+        DBConnection._commit_disconnect_db(self)
         return meal
+    def _what_day(self, day: str, month: str, year: str) -> str:
+        '''
+        Pass in a specific date and you will get its corresponding day e.g 04/11/2020 will return Wednesday.
+        '''
+        return datetime.date(int(year), int(month), int(day)).strftime('%A')
+
+
+
 
 db_access: DbAccess = DbAccess()
 suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Supper')
 breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
 
-from random import randint
-import datetime
 def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
     sorted_foods: List[Tuple[str or float]] = []
     for food in foods:
@@ -239,10 +256,3 @@ while date <= total_days:
     }
     db_access.add_food_to_month(meal=meal, month='November', year=2020)
     date += 1
-#%%
-what_day('31', '10', '2020')
-
-
-# print(db_access.specified_day_meals(date=12, month='October', year=2020))
-
-# %%
