@@ -38,6 +38,7 @@ class DBCommand(DBConnection):
     Handles command execution in the database.
     '''
     cmd: Cursor
+    _table_name: str
     
     def __init__(self) -> None:
         self._connect_db()
@@ -48,24 +49,17 @@ class DBCommand(DBConnection):
         '''
         self.cmd.execute(command)
         self._commit_disconnect_db()
-
-class DbAccess(DBCommand):
-    table_name: str
-
-    def __init__(self) -> None:
-        pass
-
-    def create_month(self, month: str, year: int) -> str:
+    
+    def create_table(self, table_name: str) -> str:
+        ''''
+        Create a new table for the month in the db.
+        Pass in a name for the table.
         '''
-        Create a new table in the db.
-        Parameters are Month and Year which are concatenated to make a table name.
-        '''
-        # TODO: Extract to external class
-        self.table_name = f'{month}_{year}'
+        self._table_name = table_name
         try:
             self._execute(
                 f'''
-                    CREATE TABLE IF NOT EXISTS {self.table_name} (
+                    CREATE TABLE IF NOT EXISTS {self._table_name} (
                         date INTEGER PRIMARY KEY,
                         day VARCHAR,
                         breakfast_primary VARCHAR,
@@ -78,32 +72,43 @@ class DbAccess(DBCommand):
                     )
                 '''
             )
-            return f'Success! Table "{self.table_name}" has been created.'
+            return f'Success! Table "{self._table_name}" has been created.'
         except OperationalError as e:
-            error: str = f'Error: "{e}". Unable to create table!'
-            # print(error)
-            return error
+            return f'Error: "{e}". Unable to create table!'
         except IntegrityError as e:
-            error: str = f'Error: "{e}". Table already exists!'
-            return error
+            return f'Error: "{e}". Table already exists!'
+
+    def drop_table(self, table_name: str) -> str:
+        '''
+        Delete a specified table from the db.
+        Pass in name of the table to be deleted.
+        '''
+        self._table_name = table_name
+        try:
+            self._execute(
+                f'''
+                DROP TABLE {self._table_name}
+                '''
+            )
+            return f'Success! Table "{self._table_name}" has been deleted.'
+        except OperationalError as e:
+            return f'Error: "{e}". Unable to perform delete operation!'
+
+class DbAccess(DBCommand):
+    table_name: str
+
+    def __init__(self) -> None:
+        pass
+
+    def create_month(self, month: str, year: int) -> str:
+        return self.create_table(table_name=f'{month}_{year}')
     
     def delete_month(self, month: str, year: int) -> str:
         '''
         Delete a specified table from the db.
         Parameters are Month and Year which are concatenated to make the table name.
         '''
-        self.table_name = f'{month}_{year}'
-        try:
-            self._execute(
-                f'''
-                DROP TABLE {self.table_name}
-                '''
-            )
-            return f'Success! Table "{self.table_name}" has been deleted.'
-        except OperationalError as e:
-            error: str = f'Error: "{e}". Unable to perform delete operation!'
-            print(error)
-            return error
+        return self.drop_table(table_name=f'{month}_{year}')
 
     def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int):
         '''
