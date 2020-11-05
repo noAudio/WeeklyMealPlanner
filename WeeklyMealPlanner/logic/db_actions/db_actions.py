@@ -11,8 +11,6 @@ class DBConnection:
     Also allows database commit and disconnection via _commit_disconnect_db().
     '''
     connection: Connection
-    cmd: Cursor
-    table_name: str
     _db: str = 'foods.db'
 
     def __init__(self) -> None:
@@ -32,12 +30,21 @@ class DBConnection:
         self.connection.commit()
         self.connection.close()
 
-class DbAccess(DBConnection):
+class DBCommand(DBConnection):
+    cmd: Cursor
+    
     def __init__(self) -> None:
-        '''
-        Access the db to read, add, update, delete and/or remove tables and table entries
-        '''
-        DBConnection._connect_db(self=self)
+        self._connect_db()
+    
+    def _execute(self, command: str) -> None:
+        self.cmd.execute(command)
+        self._commit_disconnect_db()
+
+class DbAccess(DBCommand):
+    table_name: str
+
+    def __init__(self) -> None:
+        pass
 
     def create_month(self, month: str, year: int) -> str:
         '''
@@ -46,24 +53,22 @@ class DbAccess(DBConnection):
         '''
         # TODO: Extract to external class
         self.table_name = f'{month}_{year}'
-        DBConnection._connect_db(self=self)
         try:
-            self.cmd.execute(
-            f'''
-            CREATE TABLE IF NOT EXISTS {self.table_name} (
-                date INTEGER PRIMARY KEY,
-                day VARCHAR,
-                breakfast_primary VARCHAR,
-                breakfast_secondary VARCHAR,
-                breakfast_price FLOAT,
-                supper_primary VARCHAR,
-                supper_secondary VARCHAR,
-                supper_price FLOAT,
-                day_price FLOAT
+            self._execute(
+                f'''
+                    CREATE TABLE IF NOT EXISTS {self.table_name} (
+                        date INTEGER PRIMARY KEY,
+                        day VARCHAR,
+                        breakfast_primary VARCHAR,
+                        breakfast_secondary VARCHAR,
+                        breakfast_price FLOAT,
+                        supper_primary VARCHAR,
+                        supper_secondary VARCHAR,
+                        supper_price FLOAT,
+                        day_price FLOAT
+                    )
+                '''
             )
-            '''
-            )
-            DBConnection._commit_disconnect_db(self)
             return f'Success! Table "{self.table_name}" has been created.'
         except OperationalError as e:
             error: str = f'Error: "{e}". Unable to create table!'
@@ -80,12 +85,11 @@ class DbAccess(DBConnection):
         '''
         self.table_name = f'{month}_{year}'
         try:
-            self.cmd.execute(
+            self._execute(
                 f'''
                 DROP TABLE {self.table_name}
                 '''
             )
-            DBConnection._commit_disconnect_db(self)
             return f'Success! Table "{self.table_name}" has been deleted.'
         except OperationalError as e:
             error: str = f'Error: "{e}". Unable to perform delete operation!'
@@ -97,16 +101,14 @@ class DbAccess(DBConnection):
         Add an entry for daily meals to the pecific month's table. Pass in a meal, the desired month and year.
         '''
         create: str = self.create_month(month=month, year=year)
-        DBConnection._connect_db(self=self)
         if 'Error' in create:
             print(create)
-        self.cmd.execute(
+        self._execute(
             f'''
             INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
             VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
             '''
         )
-        DBConnection._commit_disconnect_db(self)
     
     def randomize_schedule(self, date: str) -> None:
         '''
@@ -126,13 +128,12 @@ class DbAccess(DBConnection):
         Accepts a dictionary with food properties which are then added as an entry.
         '''
         try:
-            self.cmd.execute(
+            self._execute(
                 f'''
                 INSERT INTO Foods (id, name, food_type, food_class, price)
                 VALUES ('{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]})
                 '''
             )
-            DBConnection._commit_disconnect_db(self)
             return f'Success! Added food item "{food["name"]}".'
         except OperationalError as e:
             return f'Error "{e}". Unable to update entry!'
@@ -142,13 +143,12 @@ class DbAccess(DBConnection):
         Delete a food from the db.
         Accepts the name and id of the food to be deleted.
         '''
-        self.cmd.execute(
+        self._execute(
             f'''
             DELETE FROM Foods
             WHERE id = '{id}'
             '''
         )
-        DBConnection._commit_disconnect_db(self)
         return f'Succesfully deleted {name}.'
     
     def edit_food(self, id: str, food: Any) -> str:
@@ -156,21 +156,20 @@ class DbAccess(DBConnection):
         Edit a food in the db.
         Accepts the id of the food to be deleted and a dictionary of the new food values.
         '''
-        self.cmd.execute(
+        self._execute(
             f'''
             UPDATE Foods
             SET name = '{food["name"]}', food_type = '{food["food_type"]}', food_class = '{food["food_class"]}', price = '{food["price"]}'
             WHERE id = '{id}'
             '''
         )
-        DBConnection._commit_disconnect_db(self)
         return f'Succesfully edited food.'
     
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
         '''
         Find records based on a specified food type.
         '''
-        DBConnection._connect_db(self=self)
+        self._connect_db()
         self.cmd.execute(
             f'''
             SELECT *
@@ -179,7 +178,7 @@ class DbAccess(DBConnection):
             '''
         )
         foods: List[Tuple[str or float]] = self.cmd.fetchall()
-        DBConnection._commit_disconnect_db(self)
+        self._commit_disconnect_db()
         return foods
     
     def specified_day_meals(self, date: int, month: str, year: int) -> Tuple[str or float]:
@@ -187,7 +186,7 @@ class DbAccess(DBConnection):
         Find records based on a given date.
         '''
         self.table_name = f'{month}_{year}'
-        DBConnection._connect_db(self=self)
+        self._connect_db()
         self.cmd.execute(
             f'''
             SELECT *
@@ -196,7 +195,7 @@ class DbAccess(DBConnection):
             '''
         )
         meal: Tuple[str or float] = self.cmd.fetchone()
-        DBConnection._commit_disconnect_db(self)
+        self._commit_disconnect_db()
         return meal
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
