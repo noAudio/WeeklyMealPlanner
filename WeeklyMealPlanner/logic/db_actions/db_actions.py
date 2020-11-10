@@ -42,37 +42,28 @@ class DBCommand(DBConnection):
     _headers: List[str]
     _values: List[str]
 
-    
+
     def __init__(self) -> None:
         self._connect_db()
-    
+
     def _execute(self, command: str) -> None:
         '''
         Pass in a command to be executed in the database.
         '''
         self.cmd.execute(command)
         self._commit_disconnect_db()
-    
-    def create_table(self, table_name: str) -> str:
+
+    def create_table(self, table_name: str, headers: List[str]) -> str:
         ''''
         Create a new table for the month in the db.
         Pass in a name for the table.
         '''
         self._table_name = table_name
+        self._headers = headers
         try:
             self._execute(
                 f'''
-                    CREATE TABLE IF NOT EXISTS {self._table_name} (
-                        date INTEGER PRIMARY KEY,
-                        day VARCHAR,
-                        breakfast_primary VARCHAR,
-                        breakfast_secondary VARCHAR,
-                        breakfast_price FLOAT,
-                        supper_primary VARCHAR,
-                        supper_secondary VARCHAR,
-                        supper_price FLOAT,
-                        day_price FLOAT
-                    )
+                    CREATE TABLE IF NOT EXISTS {self._table_name} ({self._headers})
                 '''
             )
             return f'Success! Table "{self._table_name}" has been created.'
@@ -96,33 +87,46 @@ class DBCommand(DBConnection):
             return f'Success! Table "{self._table_name}" has been deleted.'
         except OperationalError as e:
             return f'Error: "{e}". Unable to perform delete operation!'
-    
+
     def update_table(self, table_name: str, headers: List[str], values: List[str]) -> Any:
         '''
         Update the contents of a table. Pass in the command with headers and values.
+        Format will be:
+            INSERT INTO table_name (headers)
+            VALUES (values)
         '''
         self._table_name = table_name
         self._headers = headers
         self._values = values
-        status: str = self.create_table(table_name=self._table_name)
+        status: str = self.create_table(table_name=self._table_name, headers=self._headers)
         if 'Error' in status:
             return status
-        self._execute(
-            f'''
-            INSERT INTO {self._table_name} ({self._headers})
-            VALUES ({self._values})
-            '''
-        )
-
+        try:
+            self._execute(
+                f'''
+                INSERT INTO {self._table_name} ({self._headers})
+                VALUES ({self._values})
+                '''
+            )
+            return f'Successfully updated {self._table_name}'
+        except OperationalError as e:
+            return f'Error: {e}. Unable to update entry!'
 class DbAccess(DBCommand):
     table_name: str
 
-    def __init__(self) -> None:
-        pass
-
     def create_month(self, month: str, year: int) -> str:
-        return self.create_table(table_name=f'{month}_{year}')
-    
+        headers: List[str] = ['date INTEGER PRIMARY KEY',
+                        'day VARCHAR',
+                        'breakfast_primary VARCHAR',
+                        'breakfast_secondary VARCHAR',
+                        'breakfast_price FLOAT',
+                        'supper_primary VARCHAR',
+                        'supper_secondary VARCHAR',
+                        'supper_price FLOAT',
+                        'day_price FLOAT',
+        ]
+        return self.create_table(table_name=f'{month}_{year}', headers=headers)
+
     def delete_month(self, month: str, year: int) -> str:
         return self.drop_table(table_name=f'{month}_{year}')
 
@@ -145,7 +149,7 @@ class DbAccess(DBCommand):
         # TODO: 4.Randomise sorted foods and pass into a list
         # TODO: 5.Pass data off into a table.
         pass
-        
+
     def add_food(self, food: Dict[str, Any]) -> str:
         '''
         Add a food to the db.
@@ -153,11 +157,8 @@ class DbAccess(DBCommand):
         '''
         headers: List[str] = ['id', 'name', 'food_type', 'food_class', 'price']
         values: List[Any] = ['{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]}]
-        try:
-            return str(self.update_table(table_name='Foods', headers=headers, values=values))
-        except OperationalError as e:
-            return f'Error "{e}". Unable to update entry!'
-        
+        return str(self.update_table(table_name='Foods', headers=headers, values=values))
+
     def delete_food(self, id: str, name: str) -> str:
         '''
         Delete a food from the db.
@@ -170,7 +171,7 @@ class DbAccess(DBCommand):
             '''
         )
         return f'Succesfully deleted {name}.'
-    
+
     def edit_food(self, id: str, food: Any) -> str:
         '''
         Edit a food in the db.
@@ -184,7 +185,7 @@ class DbAccess(DBCommand):
             '''
         )
         return f'Succesfully edited food.'
-    
+
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
         '''
         Find records based on a specified food type.
@@ -200,7 +201,7 @@ class DbAccess(DBCommand):
         foods: List[Tuple[str or float]] = self.cmd.fetchall()
         self._commit_disconnect_db()
         return foods
-    
+
     def specified_day_meals(self, date: int, month: str, year: int) -> Tuple[str or float]:
         '''
         Find records based on a given date.
@@ -217,6 +218,7 @@ class DbAccess(DBCommand):
         meal: Tuple[str or float] = self.cmd.fetchone()
         self._commit_disconnect_db()
         return meal
+
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
         Pass in a specific date and you will get its corresponding day e.g 04/11/2020 will return Wednesday.
