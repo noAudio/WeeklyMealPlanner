@@ -111,6 +111,23 @@ class DBCommand(DBConnection):
             return f'Successfully updated {self._table_name}'
         except OperationalError as e:
             return f'Error: {e}. Unable to update entry!'
+
+    def delete_entry(self, table_name: str, header: str, value: str) -> str:
+        '''
+        Deletes a specified entry from a specified table. Pass in the name of the table, column (header) to search in and record (value) to delete.
+        '''
+        self._table_name = table_name
+        try:
+            self._execute(
+                f'''
+                DELETE FROM {self._table_name}
+                WHERE {header} = '{value}'
+                '''
+            )
+            return f'Successfuly deleted {value}'
+        except OperationalError as e:
+            return f'Error {e}. Unable to delete entry!'
+
 class DbAccess(DBCommand):
     table_name: str
 
@@ -135,7 +152,7 @@ class DbAccess(DBCommand):
         Add an entry for daily meals to the pecific month's table. Pass in a meal, the desired month and year.
         '''
         headers: List[str] = ['date', 'day', 'breakfast_primary', 'breakfast_secondary', 'breakfast_price', 'supper_primary', 'supper_secondary', 'supper_price', 'day_price']
-        values: List[str] = ['{meal["date"]}', '{meal["day"]}', '{meal["breakfast_primary"]}', '{meal["breakfast_secondary"]}', '{meal["breakfast_price"]}', '{meal["supper_primary"]}', '{meal["supper_secondary"]}', '{meal["supper_price"]}', '{meal["day_price"]}',]
+        values: List[str] = [f'{meal["date"]}', f'{meal["day"]}', f'{meal["breakfast_primary"]}', f'{meal["breakfast_secondary"]}', f'{meal["breakfast_price"]}', f'{meal["supper_primary"]}', f'{meal["supper_secondary"]}', f'{meal["supper_price"]}', f'{meal["day_price"]}',]
         return str(self.update_table(table_name=f'{month}_{year}', headers=headers, values=values))
     
     def randomize_schedule(self, date: str) -> None:
@@ -164,13 +181,11 @@ class DbAccess(DBCommand):
         Delete a food from the db.
         Accepts the name and id of the food to be deleted.
         '''
-        self._execute(
-            f'''
-            DELETE FROM Foods
-            WHERE id = '{id}'
-            '''
-        )
-        return f'Succesfully deleted {name}.'
+        status: str = self.delete_entry(table_name='Foods', header='id', value=id)
+        if 'Success' in status:
+            return f'Succesfully deleted {name}.'
+        else:
+            return status
 
     def edit_food(self, id: str, food: Any) -> str:
         '''
