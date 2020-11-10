@@ -39,6 +39,9 @@ class DBCommand(DBConnection):
     '''
     cmd: Cursor
     _table_name: str
+    _headers: List[str]
+    _values: List[str]
+
     
     def __init__(self) -> None:
         self._connect_db()
@@ -93,6 +96,23 @@ class DBCommand(DBConnection):
             return f'Success! Table "{self._table_name}" has been deleted.'
         except OperationalError as e:
             return f'Error: "{e}". Unable to perform delete operation!'
+    
+    def update_table(self, table_name: str, headers: List[str], values: List[str]) -> Any:
+        '''
+        Update the contents of a table. Pass in the command with headers and values.
+        '''
+        self._table_name = table_name
+        self._headers = headers
+        self._values = values
+        status: str = self.create_table(table_name=self._table_name)
+        if 'Error' in status:
+            return status
+        self._execute(
+            f'''
+            INSERT INTO {self._table_name} ({self._headers})
+            VALUES ({self._values})
+            '''
+        )
 
 class DbAccess(DBCommand):
     table_name: str
@@ -104,25 +124,15 @@ class DbAccess(DBCommand):
         return self.create_table(table_name=f'{month}_{year}')
     
     def delete_month(self, month: str, year: int) -> str:
-        '''
-        Delete a specified table from the db.
-        Parameters are Month and Year which are concatenated to make the table name.
-        '''
         return self.drop_table(table_name=f'{month}_{year}')
 
     def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int):
         '''
         Add an entry for daily meals to the pecific month's table. Pass in a meal, the desired month and year.
         '''
-        create: str = self.create_month(month=month, year=year)
-        if 'Error' in create:
-            print(create)
-        self._execute(
-            f'''
-            INSERT INTO {month}_{year} (date, day, breakfast_primary, breakfast_secondary, breakfast_price, supper_primary, supper_secondary, supper_price, day_price)
-            VALUES ('{meal['date']}', '{meal['day']}', '{meal['breakfast_primary']}', '{meal['breakfast_secondary']}', '{meal['breakfast_price']}', '{meal['supper_primary']}', '{meal['supper_secondary']}', '{meal['supper_price']}', '{meal['day_price']}')
-            '''
-        )
+        headers: List[str] = ['date', 'day', 'breakfast_primary', 'breakfast_secondary', 'breakfast_price', 'supper_primary', 'supper_secondary', 'supper_price', 'day_price']
+        values: List[str] = ['{meal["date"]}', '{meal["day"]}', '{meal["breakfast_primary"]}', '{meal["breakfast_secondary"]}', '{meal["breakfast_price"]}', '{meal["supper_primary"]}', '{meal["supper_secondary"]}', '{meal["supper_price"]}', '{meal["day_price"]}',]
+        return str(self.update_table(table_name=f'{month}_{year}', headers=headers, values=values))
     
     def randomize_schedule(self, date: str) -> None:
         '''
@@ -141,14 +151,10 @@ class DbAccess(DBCommand):
         Add a food to the db.
         Accepts a dictionary with food properties which are then added as an entry.
         '''
+        headers: List[str] = ['id', 'name', 'food_type', 'food_class', 'price']
+        values: List[Any] = ['{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]}]
         try:
-            self._execute(
-                f'''
-                INSERT INTO Foods (id, name, food_type, food_class, price)
-                VALUES ('{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]})
-                '''
-            )
-            return f'Success! Added food item "{food["name"]}".'
+            return str(self.update_table(table_name='Foods', headers=headers, values=values))
         except OperationalError as e:
             return f'Error "{e}". Unable to update entry!'
         
