@@ -226,7 +226,7 @@ class DbAccess(DBCommand):
         Accepts a dictionary with food properties which are then added as an entry.
         '''
         headers: List[str] = ['id', 'name', 'food_type', 'food_class', 'price']
-        values: List[Any] = ['{food["id"]}', '{food["name"]}', '{food["food_type"]}', '{food["food_class"]}', {food["price"]}]
+        values: List[Any] = [f'{food["id"]}', f'{food["name"]}', f'{food["food_type"]}', f'{food["food_class"]}', {food["price"]}]
         return str(self.update_table(table_name='Foods', headers=headers, values=values))
 
     def delete_food(self, id: str, name: str) -> str:
