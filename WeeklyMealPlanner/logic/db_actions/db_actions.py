@@ -150,6 +150,21 @@ class DBCommand(DBConnection):
             return f'Successfully updated {self._table_name}'
         except OperationalError as e:
             return f'Error: {e}. Update table {self._table_name} failed.'
+    
+    def filter_records(self, table_name: str, header: str, value: str) -> List[Tuple[Any]]:
+        '''
+        Filter specific records from specified table. Pass in table name, column name as 'header' and entry to filter by as 'value'.
+        '''
+        self._table_name = table_name
+        self._execute(
+            f'''
+            SELECT *
+            FROM {self._table_name}
+            WHERE {header} = '{value}'
+            '''
+        )
+        filtered_values: List[Tuple[Any]] = self.cmd.fetchall()
+        return filtered_values
 
 class DbAccess(DBCommand):
     table_name: str
@@ -221,17 +236,7 @@ class DbAccess(DBCommand):
         '''
         Find records based on a specified food type.
         '''
-        self._connect_db()
-        self.cmd.execute(
-            f'''
-            SELECT *
-            FROM Foods
-            WHERE food_type = '{food_type}'
-            '''
-        )
-        foods: List[Tuple[str or float]] = self.cmd.fetchall()
-        self._commit_disconnect_db()
-        return foods
+        return self.filter_records(table_name='Foods', header='food_type', value=food_type)
 
     def specified_day_meals(self, date: int, month: str, year: int) -> Tuple[str or float]:
         '''
@@ -311,14 +316,5 @@ while date <= total_days:
 
 
 #%%
-newdict = {'name': 'sam', 'number': 123, 'id': 'abc123'}
-newlist = []
-for k,v in newdict.items():
-    newlist.append(f"{k} = '{v}',")
-print(*newlist)
-new_str = ''
-for item in newlist:
-    new_str = new_str + item + ' '
-print(new_str)
-print(new_str[:-2])
+pass
 #%%
