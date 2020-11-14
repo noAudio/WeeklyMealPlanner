@@ -128,6 +128,29 @@ class DBCommand(DBConnection):
         except OperationalError as e:
             return f'Error {e}. Unable to delete entry!'
 
+    def edit_entry(self, table_name: str, primary_key: str, primary_key_value: Any, **kwargs: Dict[str, str or float]) -> str:
+        '''
+        Edit entries within the database.
+        '''
+        self._table_name = table_name
+        set_values: str = ''
+
+        for k,v in kwargs.items():
+            set_values = set_values + f"{k} = '{v}', "
+        set_values = set_values[:-2]
+
+        try:
+            self._execute(
+                f'''
+                UPDATE {self._table_name}
+                SET {set_values}
+                WHERE {primary_key} = '{primary_key_value}'
+                '''
+            )
+            return f'Successfully updated {self._table_name}'
+        except OperationalError as e:
+            return f'Error: {e}. Update table {self._table_name} failed.'
+
 class DbAccess(DBCommand):
     table_name: str
 
@@ -187,19 +210,12 @@ class DbAccess(DBCommand):
         else:
             return status
 
-    def edit_food(self, id: str, food: Any) -> str:
+    def edit_food(self, id: str, food: Dict[str, str or int]) -> str:
         '''
         Edit a food in the db.
         Accepts the id of the food to be deleted and a dictionary of the new food values.
         '''
-        self._execute(
-            f'''
-            UPDATE Foods
-            SET name = '{food["name"]}', food_type = '{food["food_type"]}', food_class = '{food["food_class"]}', price = '{food["price"]}'
-            WHERE id = '{id}'
-            '''
-        )
-        return f'Succesfully edited food.'
+        return self.edit_entry(table_name='Food', primary_key='id', primary_key_value=f'{id}', **food)
 
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
         '''
@@ -292,3 +308,17 @@ while date <= total_days:
     }
     db_access.add_food_to_month(meal=meal, month='November', year=2020)
     date += 1
+
+
+#%%
+newdict = {'name': 'sam', 'number': 123, 'id': 'abc123'}
+newlist = []
+for k,v in newdict.items():
+    newlist.append(f"{k} = '{v}',")
+print(*newlist)
+new_str = ''
+for item in newlist:
+    new_str = new_str + item + ' '
+print(new_str)
+print(new_str[:-2])
+#%%
