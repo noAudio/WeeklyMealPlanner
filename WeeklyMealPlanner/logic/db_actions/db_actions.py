@@ -166,6 +166,21 @@ class DBCommand(DBConnection):
         filtered_values: List[Tuple[Any]] = self.cmd.fetchall()
         return filtered_values
 
+    def find_record(self, table_name: str, header: str, value: str) -> Tuple[str or float]:
+        '''
+        Filter specific records from specified table. Pass in table name, column name as 'header' and entry to filter by as 'value'.
+        '''
+        self._table_name = table_name
+        self._execute(
+            f'''
+            SELECT *
+            FROM {self._table_name}
+            WHERE {header} = '{value}'
+            '''
+        )
+        record: Tuple[Any] = self.cmd.fetchone()
+        return record
+
 class DbAccess(DBCommand):
     table_name: str
 
@@ -242,18 +257,7 @@ class DbAccess(DBCommand):
         '''
         Find records based on a given date.
         '''
-        self.table_name = f'{month}_{year}'
-        self._connect_db()
-        self.cmd.execute(
-            f'''
-            SELECT *
-            FROM {self.table_name}
-            WHERE date = '{date}'
-            '''
-        )
-        meal: Tuple[str or float] = self.cmd.fetchone()
-        self._commit_disconnect_db()
-        return meal
+        return self.find_record(table_name=f'{month}_{year}', header='date', value=str(date))
 
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
