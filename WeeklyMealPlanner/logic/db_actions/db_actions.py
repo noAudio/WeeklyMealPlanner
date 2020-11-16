@@ -266,7 +266,12 @@ class DbAccess(DBCommand):
         '''
         Find records based on a given date.
         '''
-        return self.find_record(table_name=f'{month}_{year}', header='date', value=str(date))
+        status: Tuple[str] = self.find_record(table_name=f'{month}_{year}', header='date', value=str(date))
+        if status != None:
+            return status
+        elif status == None:
+            return ('Requested record does not exist.',)
+        return status
 
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
@@ -312,22 +317,21 @@ year: int = 2020
 # print(december_schedule.foods_by_foodtype(food_type='FoodType.Supper'))
 
 # TODO: TEST 4: Add food to month
-meal: Dict[str, Any] = {
-    "date": 3,
-    "day": "'Wednesday'",
-    "breakfast_primary": "'Mandazi'",
-    "breakfast_secondary": "'Eggs'",
-    "breakfast_price": 84,
-    "supper_primary": "'Rice'",
-    "supper_secondary": "'Pojo'",
-    "supper_price": 90,
-    "day_price": 194,
-}
-print(december_schedule.add_food_to_month(meal=meal, month=month, year=year))
+# meal: Dict[str, Any] = {
+#     "date": 3,
+#     "day": "'Wednesday'",
+#     "breakfast_primary": "'Mandazi'",
+#     "breakfast_secondary": "'Eggs'",
+#     "breakfast_price": 84,
+#     "supper_primary": "'Rice'",
+#     "supper_secondary": "'Pojo'",
+#     "supper_price": 90,
+#     "day_price": 194,
+# }
+# print(december_schedule.add_food_to_month(meal=meal, month=month, year=year))
 
 # TODO: TEST 9: Find specific meal by day
-
-
+# print(december_schedule.specified_day_meals(date=4, month=month, year=year))
 
 
 
