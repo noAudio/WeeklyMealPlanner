@@ -40,7 +40,7 @@ class DBCommand(DBConnection):
     cmd: Cursor
     _table_name: str
     _headers: str
-    _values: List[str]
+    _values: str
 
 
     def __init__(self) -> None:
@@ -50,6 +50,7 @@ class DBCommand(DBConnection):
         '''
         Pass in a command to be executed in the database.
         '''
+        self._connect_db()
         self.cmd.execute(command)
         self._commit_disconnect_db()
 
@@ -96,9 +97,9 @@ class DBCommand(DBConnection):
             VALUES (values)
         '''
         self._table_name = table_name
-        self._headers = headers
-        self._values = values
-        status: str = self.create_table(table_name=self._table_name, headers=self._headers)
+        self._headers = ", ".join(str(header) for header in headers)
+        self._values = ", ".join(str(value) for value in values)
+        status: str = self.create_table(table_name=self._table_name, headers=headers)
         if 'Error' in status:
             return status
         try:
@@ -226,7 +227,7 @@ class DbAccess(DBCommand):
         Accepts a dictionary with food properties which are then added as an entry.
         '''
         headers: List[str] = ['id', 'name', 'food_type', 'food_class', 'price']
-        values: List[Any] = [f'{food["id"]}', f'{food["name"]}', f'{food["food_type"]}', f'{food["food_class"]}', {food["price"]}]
+        values: List[Any] = [f'{food["id"]}', f'{food["name"]}', f'{food["food_type"]}', f'{food["food_class"]}', f'{food["price"]}']
         return str(self.update_table(table_name='Foods', headers=headers, values=values))
 
     def delete_food(self, id: str, name: str) -> str:
@@ -267,15 +268,25 @@ class DbAccess(DBCommand):
 
 
 december_schedule: DbAccess = DbAccess()
-# TODO: TEST 1: Create month
 month: str = 'December'
 year: int = 2020
-print(december_schedule.create_month(month=month, year=year))
+
+# TODO: TEST 1: Create month
+# print(december_schedule.create_month(month=month, year=year))
 
 # TODO: TEST 2: Delete month
 # print(december_schedule.delete_month(month=month, year=year))
 
 # TODO: TEST 3: Add food to month
+food: Dict[str, Any] = {
+    "id": "'f99'",
+    "name": "'KDF'",
+    "food_type": "'Foodtype.breakfast'",
+    "food_class": "'FoodClass.Primary'",
+    "price": 40,
+}
+print(december_schedule.add_food(food=food))
+
 # TODO: TEST 4: Add food to month
 # TODO: TEST 5: Add new food
 # TODO: TEST 6: Edit food
