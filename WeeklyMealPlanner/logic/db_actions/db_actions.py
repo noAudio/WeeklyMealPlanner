@@ -39,7 +39,7 @@ class DBCommand(DBConnection):
     '''
     cmd: Cursor
     _table_name: str
-    _headers: List[str]
+    _headers: str
     _values: List[str]
 
 
@@ -59,7 +59,7 @@ class DBCommand(DBConnection):
         Pass in a name for the table.
         '''
         self._table_name = table_name
-        self._headers = headers
+        self._headers = ", ".join(str(header) for header in headers)
         try:
             self._execute(
                 f'''
@@ -266,59 +266,80 @@ class DbAccess(DBCommand):
         return datetime.date(int(year), int(month), int(day)).strftime('%A')
 
 
+december_schedule: DbAccess = DbAccess()
+# TODO: TEST 1: Create month
+month: str = 'December'
+year: int = 2020
+print(december_schedule.create_month(month=month, year=year))
+
+# TODO: TEST 2: Delete month
+# print(december_schedule.delete_month(month=month, year=year))
+
+# TODO: TEST 3: Add food to month
+# TODO: TEST 4: Add food to month
+# TODO: TEST 5: Add new food
+# TODO: TEST 6: Edit food
+# TODO: TEST 7: Delete food
+# TODO: TEST 8: Filter foods
+# TODO: TEST 9: Find specific meal by day
 
 
-db_access: DbAccess = DbAccess()
-suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Supper')
-breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
-
-def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
-    sorted_foods: List[Tuple[str or float]] = []
-    for food in foods:
-        if food[3] == food_class:
-            sorted_foods.append(food)
-    return sorted_foods
-breakfast_primaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Primary')
-breakfast_secondaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Secondary')
-supper_primaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Primary')
-supper_secondaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Secondary')
-
-def random_food(list: List[Tuple[str or float]]) -> List[Any]:
-    food: Tuple[str or float] = list[randint(0, len(list) - 1)]
-    food_name: str = food[1]
-    food_price: float = food[4]
-    return [food_name, food_price]
-
-total_days: int = 30
-date: int = 1
-
-month = '11'
-year = '2020'
-def what_day(day: str, month: str, year: str) -> str:
-    return datetime.date(int(year), int(month), int(day)).strftime('%A')
-
-while date <= total_days:
-    breakfast_primary = random_food(breakfast_primaries)
-    breakfast_secondary = random_food(breakfast_secondaries)
-    supper_primary = random_food(supper_primaries)
-    supper_secondary = random_food(supper_secondaries)
 
 
-    meal: Dict[str, Any] = {
-        'date': date,
-        'day': what_day(str(date), '11', '2020'),
-        'breakfast_primary': breakfast_primary[0],
-        'breakfast_secondary': breakfast_secondary[0],
-        'breakfast_price': breakfast_primary[1] + breakfast_secondary[1],
-        'supper_primary': supper_primary[0],
-        'supper_secondary': supper_secondary[0],
-        'supper_price': supper_primary[1] + supper_secondary[1],
-        'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1],
-    }
-    db_access.add_food_to_month(meal=meal, month='November', year=2020)
-    date += 1
+
+# db_access: DbAccess = DbAccess()
+# suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Supper')
+# breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
+
+# def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
+#     sorted_foods: List[Tuple[str or float]] = []
+#     for food in foods:
+#         if food[3] == food_class:
+#             sorted_foods.append(food)
+#     return sorted_foods
+# breakfast_primaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Primary')
+# breakfast_secondaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Secondary')
+# supper_primaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Primary')
+# supper_secondaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Secondary')
+
+# def random_food(list: List[Tuple[str or float]]) -> List[Any]:
+#     food: Tuple[str or float] = list[randint(0, len(list) - 1)]
+#     food_name: str = food[1]
+#     food_price: float = food[4]
+#     return [food_name, food_price]
+
+# total_days: int = 30
+# date: int = 1
+
+# month = '11'
+# year = '2020'
+# def what_day(day: str, month: str, year: str) -> str:
+#     return datetime.date(int(year), int(month), int(day)).strftime('%A')
+
+# while date <= total_days:
+#     breakfast_primary = random_food(breakfast_primaries)
+#     breakfast_secondary = random_food(breakfast_secondaries)
+#     supper_primary = random_food(supper_primaries)
+#     supper_secondary = random_food(supper_secondaries)
+
+
+#     meal: Dict[str, Any] = {
+#         'date': date,
+#         'day': what_day(str(date), '11', '2020'),
+#         'breakfast_primary': breakfast_primary[0],
+#         'breakfast_secondary': breakfast_secondary[0],
+#         'breakfast_price': breakfast_primary[1] + breakfast_secondary[1],
+#         'supper_primary': supper_primary[0],
+#         'supper_secondary': supper_secondary[0],
+#         'supper_price': supper_primary[1] + supper_secondary[1],
+#         'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1],
+#     }
+#     db_access.add_food_to_month(meal=meal, month='November', year=2020)
+#     date += 1
 
 
 #%%
-pass
+# from typing import List
+# h_list: List[str] = ['date INTEGER PRIMARY KEY', 'day VARCHAR', 'breakfast_primary VARCHAR', 'breakfast_secondary VARCHAR', 'breakfast_price FLOAT', 'supper_primary VARCHAR', 'supper_secondary VARCHAR', 'supper_price FLOAT', 'day_price FLOAT',]
+# print(", ".join(str(header) for header in h_list))
 #%%
