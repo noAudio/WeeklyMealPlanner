@@ -137,7 +137,7 @@ class DBCommand(DBConnection):
         set_values: str = ''
 
         for k,v in kwargs.items():
-            set_values = set_values + f"{k} = '{v}', "
+            set_values = set_values + f"{k} = {v}, "
         set_values = set_values[:-2]
 
         try:
@@ -145,7 +145,7 @@ class DBCommand(DBConnection):
                 f'''
                 UPDATE {self._table_name}
                 SET {set_values}
-                WHERE {primary_key} = '{primary_key_value}'
+                WHERE {primary_key} = {primary_key_value}
                 '''
             )
             return f'Successfully updated {self._table_name}'
@@ -246,7 +246,7 @@ class DbAccess(DBCommand):
         Edit a food in the db.
         Accepts the id of the food to be deleted and a dictionary of the new food values.
         '''
-        return self.edit_entry(table_name='Food', primary_key='id', primary_key_value=f'{id}', **food)
+        return self.edit_entry(table_name='Foods', primary_key="id", primary_key_value=f'{id}', **food)
 
     def foods_by_foodtype(self, food_type: str) -> List[Tuple[str or float]]:
         '''
@@ -278,18 +278,27 @@ year: int = 2020
 # print(december_schedule.delete_month(month=month, year=year))
 
 # TODO: TEST 3: Add food to month
-food: Dict[str, Any] = {
-    "id": "'f99'",
-    "name": "'KDF'",
-    "food_type": "'Foodtype.breakfast'",
-    "food_class": "'FoodClass.Primary'",
-    "price": 40,
-}
-print(december_schedule.add_food(food=food))
+# food: Dict[str, Any] = {
+#     "id": "'f99'",
+#     "name": "'KDF'",
+#     "food_type": "'Foodtype.breakfast'",
+#     "food_class": "'FoodClass.Primary'",
+#     "price": 40,
+# }
+# print(december_schedule.add_food(food=food))
 
 # TODO: TEST 4: Add food to month
 # TODO: TEST 5: Add new food
 # TODO: TEST 6: Edit food
+# new_food: Dict[str, Any] = {
+#     "id": "'f99'",
+#     "name": "'Greengrams'",
+#     "food_type": "'Foodtype.Supper'",
+#     "food_class": "'FoodClass.Secondary'",
+#     "price": 50,
+# }
+# print(december_schedule.edit_food(id="'f88'", food=new_food))
+
 # TODO: TEST 7: Delete food
 # TODO: TEST 8: Filter foods
 # TODO: TEST 9: Find specific meal by day
