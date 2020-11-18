@@ -1,5 +1,3 @@
-# from WeeklyMealPlanner.logic.data.foods import FoodClass, FoodType
-# from WeeklyMealPlanner.logic.data import meal
 from sqlite3 import connect, OperationalError, IntegrityError
 from sqlite3.dbapi2 import Connection, Cursor
 from typing import Any, Dict, List, Tuple
@@ -102,9 +100,7 @@ class DBCommand(DBConnection):
         self._table_name = table_name
         self._headers = ", ".join(str(header) for header in headers)
         self._values = ", ".join(str(value) for value in values)
-        status: str = self.create_table(table_name=self._table_name, headers=headers)
-        if 'Error' in status:
-            return status
+
         try:
             self._execute(
                 f'''
@@ -267,33 +263,63 @@ class MealScheduler(DBAccess):
     '''
         Creates a randomized timetable from the list of foods in the database based on a given month and year.
     '''
+    _month_str: str
     _month: int
     _year: int
     _days: int
     _suppers: List[Tuple[str or float]]
     _breakfasts: List[Tuple[str or float]]
 
-        # TODO: 1.Run a check for the month passed in as an argument
-        # day: str = self._what_day(month=month, year=year)
-        # TODO: 2.Use a while loop with the number of days in the specified month
-        # TODO: 3.Read the FOOD table and sort foods by categories
-        # TODO: 4.Randomise sorted foods and pass into a list
-        # TODO: 5.Pass data off into a table.
-
     def __init__(self, month: str, year: int) -> None:
-        self._month = datetime.datetime.strptime(month[:3], '%b').month
+        self._month_str = month
+        self._month = datetime.datetime.strptime(self._month_str[:3], '%b').month
         self._year = year
         self._days = monthrange(self._year, self._month)[1]
         self._suppers = self.foods_by_foodtype('FoodType.Supper')
         self._breakfasts = self.foods_by_foodtype('FoodType.Breakfast')
 
-    def randomize_schedule(self) -> None:
+    def randomize_schedule(self) -> str:
         '''
          Create a list of random food combinations and pass them into a month table.
         '''
-        pass
+        breakfast_primaries: List[Tuple[str or float]] = self._sort_by_class(foods=self._breakfasts, foodclass='FoodClass.Primary')
+        breakfast_secondaries: List[Tuple[str or float]] = self._sort_by_class(foods=self._breakfasts, foodclass='FoodClass.Secondary')
+        supper_primaries: List[Tuple[str or float]] = self._sort_by_class(foods=self._suppers, foodclass='FoodClass.Primary')
+        supper_secondaries: List[Tuple[str or float]] = self._sort_by_class(foods=self._suppers, foodclass='FoodClass.Secondary')
+        date: int = 1
 
-    def sort_by_class(self, foods: List[Tuple[str or float]], foodclass: str) -> List[Tuple[str or float]]:
+        status = self.create_month(month=self._month_str, year=self._year)
+
+        if 'Error' in status:
+            return status
+        else:
+            while date <= self._days:
+                breakfast_primary = self._random_food(foods=breakfast_primaries)
+                breakfast_secondary = self._random_food(foods=breakfast_secondaries)
+                supper_primary = self._random_food(foods=supper_primaries)
+                supper_secondary = self._random_food(foods=supper_secondaries)
+
+                meal: Dict[str, Any] = {
+                    'date': date,
+                    'day': f"'{self._what_day(str(date), month=str(self._month), year=str(self._year))}'",
+                    'breakfast_primary': f"{breakfast_primary[0]}",
+                    'breakfast_secondary': f"{breakfast_secondary[0]}",
+                    'breakfast_price': breakfast_primary[1] + breakfast_secondary[1],
+                    'supper_primary': f"{supper_primary[0]}",
+                    'supper_secondary': f"{supper_secondary[0]}",
+                    'supper_price': supper_primary[1] + supper_secondary[1],
+                    'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1] + 19.5,
+                }
+
+                date += 1
+                
+                status = self.add_food_to_month(meal=meal, month=self._month_str, year=self._year)
+                if 'Error' in status:
+                    break
+
+            return status
+
+    def _sort_by_class(self, foods: List[Tuple[str or float]], foodclass: str) -> List[Tuple[str or float]]:
         '''
             Sort foods by the specified food class (foodclass).
         '''
@@ -304,12 +330,12 @@ class MealScheduler(DBAccess):
 
         return sorted_foods
 
-    def random_food(self, foods: List[Tuple[str or float]]) -> List[str or float]:
+    def _random_food(self, foods: List[Tuple[str or float]]) -> List[Any]:
         '''
             Picks a random food from a list of foods and returns the food name and price in a list.
         '''
         food: Tuple[str or float] = foods[randint(0, len(foods) - 1)]
-        return [food[1], food[4]]
+        return [f"'{food[1]}'", food[4]]
 
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
@@ -317,7 +343,8 @@ class MealScheduler(DBAccess):
         '''
         return datetime.date(int(year), int(month), int(day)).strftime('%A')
 
-mealscheduler: MealScheduler = MealScheduler(month='February', year=2020)
+mealscheduler: MealScheduler = MealScheduler(month='February', year=2021)
+print(mealscheduler.randomize_schedule())
 
 december_schedule: DBAccess = DBAccess()
 month: str = 'December'
@@ -427,7 +454,6 @@ year: int = 2020
 
 
 #%%
-# from typing import List
-# h_list: List[str] = ['date INTEGER PRIMARY KEY', 'day VARCHAR', 'breakfast_primary VARCHAR', 'breakfast_secondary VARCHAR', 'breakfast_price FLOAT', 'supper_primary VARCHAR', 'supper_secondary VARCHAR', 'supper_price FLOAT', 'day_price FLOAT',]
-# print(", ".join(str(header) for header in h_list))
+# s = 'String'
+# print(s)
 #%%
