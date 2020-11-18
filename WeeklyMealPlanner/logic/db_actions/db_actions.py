@@ -191,7 +191,7 @@ class DBCommand(DBConnection):
         self._commit_disconnect_db()
         return record
 
-class DbAccess(DBCommand):
+class DBAccess(DBCommand):
     table_name: str
 
     def create_month(self, month: str, year: int) -> str:
@@ -262,13 +262,15 @@ class DbAccess(DBCommand):
             return ('Requested record does not exist.',)
         return status
 
-class MealScheduler(DBCommand):
+class MealScheduler(DBAccess):
     '''
         Creates a randomized timetable from the list of foods in the database based on a given month and year.
     '''
     _month: int
     _year: int
     _days: int
+    _suppers: List[Tuple[str or float]]
+    _breakfasts: List[Tuple[str or float]]
 
         # TODO: 1.Run a check for the month passed in as an argument
         # day: str = self._what_day(month=month, year=year)
@@ -281,13 +283,25 @@ class MealScheduler(DBCommand):
         self._month = datetime.datetime.strptime(month[:3], '%b').month
         self._year = year
         self._days = monthrange(self._year, self._month)[1]
-        pass
+        self._suppers = self.foods_by_foodtype('FoodType.Supper')
+        self._breakfasts = self.foods_by_foodtype('FoodType.Breakfast')
 
     def randomize_schedule(self) -> None:
         '''
          Create a list of random food combinations and pass them into a month table.
         '''
         pass
+
+    def sort_by_class(self, foods: List[Tuple[str or float]], foodclass: str) -> List[Tuple[str or float]]:
+        '''
+            Sort foods by the specified food class (foodclass).
+        '''
+        sorted_foods: List[Tuple[str or float]] = []
+        for food in foods:
+            if food[3] == foodclass:
+                sorted_foods.append(food)
+
+        return sorted_foods
 
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
@@ -297,7 +311,7 @@ class MealScheduler(DBCommand):
 
 mealscheduler: MealScheduler = MealScheduler(month='February', year=2020)
 
-december_schedule: DbAccess = DbAccess()
+december_schedule: DBAccess = DBAccess()
 month: str = 'December'
 year: int = 2020
 
