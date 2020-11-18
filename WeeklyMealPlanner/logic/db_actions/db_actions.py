@@ -4,6 +4,7 @@ from sqlite3.dbapi2 import Connection, Cursor
 from typing import Any, Dict, List, Tuple
 from random import randint
 import datetime
+from calendar import monthrange
 
 class DBConnection:
     '''
@@ -216,18 +217,6 @@ class DbAccess(DBCommand):
         headers: List[str] = ['date', 'day', 'breakfast_primary', 'breakfast_secondary', 'breakfast_price', 'supper_primary', 'supper_secondary', 'supper_price', 'day_price']
         values: List[Any] = [f'{meal["date"]}', f'{meal["day"]}', f'{meal["breakfast_primary"]}', f'{meal["breakfast_secondary"]}', meal["breakfast_price"], f'{meal["supper_primary"]}', f'{meal["supper_secondary"]}', meal["supper_price"], meal["day_price"],]
         return str(self.update_table(table_name=f'{month}_{year}', headers=headers, values=values))
-    
-    def randomize_schedule(self, date: str) -> None:
-        '''
-         Create a list of random food combinations and pass them into a month table.
-        '''
-        # TODO: 1.Run a check for the month passed in as an argument
-        # day: str = self._what_day(month=month, year=year)
-        # TODO: 2.Use a while loop with the number of days in the specified month
-        # TODO: 3.Read the FOOD table and sort foods by categories
-        # TODO: 4.Randomise sorted foods and pass into a list
-        # TODO: 5.Pass data off into a table.
-        pass
 
     def add_food(self, food: Dict[str, Any]) -> str:
         '''
@@ -273,24 +262,51 @@ class DbAccess(DBCommand):
             return ('Requested record does not exist.',)
         return status
 
+class MealScheduler(DBCommand):
+    '''
+        Creates a randomized timetable from the list of foods in the database based on a given month and year.
+    '''
+    _month: int
+    _year: int
+    _days: int
+
+        # TODO: 1.Run a check for the month passed in as an argument
+        # day: str = self._what_day(month=month, year=year)
+        # TODO: 2.Use a while loop with the number of days in the specified month
+        # TODO: 3.Read the FOOD table and sort foods by categories
+        # TODO: 4.Randomise sorted foods and pass into a list
+        # TODO: 5.Pass data off into a table.
+
+    def __init__(self, month: str, year: int) -> None:
+        self._month = datetime.datetime.strptime(month[:3], '%b').month
+        self._year = year
+        pass
+
+    def randomize_schedule(self, date: str) -> None:
+        '''
+         Create a list of random food combinations and pass them into a month table.
+        '''
+        pass
+
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
         Pass in a specific date and you will get its corresponding day e.g 04/11/2020 will return Wednesday.
         '''
         return datetime.date(int(year), int(month), int(day)).strftime('%A')
 
+mealscheduler: MealScheduler = MealScheduler(month='January', year=2020)
 
 december_schedule: DbAccess = DbAccess()
 month: str = 'December'
 year: int = 2020
 
-# TODO: TEST 1: Create month
+# TEST 1: Create month
 # print(december_schedule.create_month(month=month, year=year))
 
-# TODO: TEST 2: Delete month
+# TEST 2: Delete month
 # print(december_schedule.delete_month(month=month, year=year))
 
-# TODO: TEST 5: Add new food
+# TEST 5: Add new food
 # food: Dict[str, Any] = {
 #     "id": "'f99'",
 #     "name": "'KDF'",
@@ -300,7 +316,7 @@ year: int = 2020
 # }
 # print(december_schedule.add_food(food=food))
   
-# TODO: TEST 6: Edit food
+# TEST 6: Edit food
 # new_food: Dict[str, Any] = {
 #     "id": "'f99'",
 #     "name": "'Greengrams'",
@@ -310,13 +326,13 @@ year: int = 2020
 # }
 # print(december_schedule.edit_food(id="'f88'", food=new_food))
 
-# TODO: TEST 7: Delete food
+# TEST 7: Delete food
 # print(december_schedule.delete_food(id="f99", name='Greengrams'))
 
-# TODO: TEST 8: Filter foods
+# TEST 8: Filter foods
 # print(december_schedule.foods_by_foodtype(food_type='FoodType.Supper'))
 
-# TODO: TEST 4: Add food to month
+# TEST 4: Add food to month
 # meal: Dict[str, Any] = {
 #     "date": 3,
 #     "day": "'Wednesday'",
@@ -330,7 +346,7 @@ year: int = 2020
 # }
 # print(december_schedule.add_food_to_month(meal=meal, month=month, year=year))
 
-# TODO: TEST 9: Find specific meal by day
+# TEST 9: Find specific meal by day
 # print(december_schedule.specified_day_meals(date=4, month=month, year=year))
 
 
