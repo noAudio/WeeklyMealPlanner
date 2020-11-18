@@ -1,4 +1,5 @@
 # from WeeklyMealPlanner.logic.data.foods import FoodClass, FoodType
+# from WeeklyMealPlanner.logic.data import meal
 from sqlite3 import connect, OperationalError, IntegrityError
 from sqlite3.dbapi2 import Connection, Cursor
 from typing import Any, Dict, List, Tuple
@@ -302,6 +303,13 @@ class MealScheduler(DBAccess):
                 sorted_foods.append(food)
 
         return sorted_foods
+
+    def random_food(self, foods: List[Tuple[str or float]]) -> List[str or float]:
+        '''
+            Picks a random food from a list of foods and returns the food name and price in a list.
+        '''
+        food: Tuple[str or float] = foods[randint(0, len(foods) - 1)]
+        return [food[1], food[4]]
 
     def _what_day(self, day: str, month: str, year: str) -> str:
         '''
