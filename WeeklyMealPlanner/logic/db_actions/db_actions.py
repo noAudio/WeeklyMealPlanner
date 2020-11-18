@@ -280,9 +280,10 @@ class MealScheduler(DBCommand):
     def __init__(self, month: str, year: int) -> None:
         self._month = datetime.datetime.strptime(month[:3], '%b').month
         self._year = year
+        self._days = monthrange(self._year, self._month)[1]
         pass
 
-    def randomize_schedule(self, date: str) -> None:
+    def randomize_schedule(self) -> None:
         '''
          Create a list of random food combinations and pass them into a month table.
         '''
@@ -294,7 +295,7 @@ class MealScheduler(DBCommand):
         '''
         return datetime.date(int(year), int(month), int(day)).strftime('%A')
 
-mealscheduler: MealScheduler = MealScheduler(month='January', year=2020)
+mealscheduler: MealScheduler = MealScheduler(month='February', year=2020)
 
 december_schedule: DbAccess = DbAccess()
 month: str = 'December'
