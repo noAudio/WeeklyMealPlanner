@@ -7,7 +7,7 @@ from calendar import monthrange
 
 class DBConnection:
     '''
-    Establish connection to database.
+    Establishes connection to database.
     Also allows database commit and disconnection via _commit_disconnect_db().
     '''
     connection: Connection
@@ -35,7 +35,7 @@ class DBConnection:
 
 class DBCommand(DBConnection):
     '''
-    Handles command execution in the database.
+        General class that handles database functions.
     '''
     cmd: Cursor
     _table_name: str
@@ -188,10 +188,13 @@ class DBCommand(DBConnection):
         self._commit_disconnect_db()
         return record
 
-class DBAccess(DBCommand):
+class MonthFormatDatabaseAccess(DBCommand):
     table_name: str
 
     def create_month(self, month: str, year: int) -> str:
+        '''
+            Creates a table in the database for the specified month. Pass in month and year to create table name.
+        '''
         headers: List[str] = ['date INTEGER PRIMARY KEY',
                         'day VARCHAR',
                         'breakfast_primary VARCHAR',
@@ -205,6 +208,9 @@ class DBAccess(DBCommand):
         return self.create_table(table_name=f'{month}_{year}', headers=headers)
 
     def delete_month(self, month: str, year: int) -> str:
+        '''
+            Delete a specified month table from the database. Pass in month and year to create table name.
+        '''
         return self.drop_table(table_name=f'{month}_{year}')
 
     def add_food_to_month(self, meal: Dict[str, Any], month: str, year: int):
@@ -259,7 +265,7 @@ class DBAccess(DBCommand):
             return ('Requested record does not exist.',)
         return status
 
-class MealScheduler(DBAccess):
+class MealScheduler(MonthFormatDatabaseAccess):
     '''
         Creates a randomized timetable from the list of foods in the database based on a given month and year.
     '''
@@ -342,118 +348,3 @@ class MealScheduler(DBAccess):
         Pass in a specific date and you will get its corresponding day e.g 04/11/2020 will return Wednesday.
         '''
         return datetime.date(int(year), int(month), int(day)).strftime('%A')
-
-mealscheduler: MealScheduler = MealScheduler(month='February', year=2021)
-print(mealscheduler.randomize_schedule())
-
-december_schedule: DBAccess = DBAccess()
-month: str = 'December'
-year: int = 2020
-
-# TEST 1: Create month
-# print(december_schedule.create_month(month=month, year=year))
-
-# TEST 2: Delete month
-# print(december_schedule.delete_month(month=month, year=year))
-
-# TEST 5: Add new food
-# food: Dict[str, Any] = {
-#     "id": "'f99'",
-#     "name": "'KDF'",
-#     "food_type": "'Foodtype.breakfast'",
-#     "food_class": "'FoodClass.Primary'",
-#     "price": 40,
-# }
-# print(december_schedule.add_food(food=food))
-  
-# TEST 6: Edit food
-# new_food: Dict[str, Any] = {
-#     "id": "'f99'",
-#     "name": "'Greengrams'",
-#     "food_type": "'Foodtype.Supper'",
-#     "food_class": "'FoodClass.Secondary'",
-#     "price": 50,
-# }
-# print(december_schedule.edit_food(id="'f88'", food=new_food))
-
-# TEST 7: Delete food
-# print(december_schedule.delete_food(id="f99", name='Greengrams'))
-
-# TEST 8: Filter foods
-# print(december_schedule.foods_by_foodtype(food_type='FoodType.Supper'))
-
-# TEST 4: Add food to month
-# meal: Dict[str, Any] = {
-#     "date": 3,
-#     "day": "'Wednesday'",
-#     "breakfast_primary": "'Mandazi'",
-#     "breakfast_secondary": "'Eggs'",
-#     "breakfast_price": 84,
-#     "supper_primary": "'Rice'",
-#     "supper_secondary": "'Pojo'",
-#     "supper_price": 90,
-#     "day_price": 194,
-# }
-# print(december_schedule.add_food_to_month(meal=meal, month=month, year=year))
-
-# TEST 9: Find specific meal by day
-# print(december_schedule.specified_day_meals(date=4, month=month, year=year))
-
-
-
-
-# db_access: DbAccess = DbAccess()
-# suppers: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Supper')
-# breakfasts: List[Tuple[str or float]] = db_access.foods_by_foodtype(food_type='FoodType.Breakfast')
-
-# def sort_by_class(foods: List[Tuple[str or float]], food_class: str) -> List[Tuple[str or float]]:
-#     sorted_foods: List[Tuple[str or float]] = []
-#     for food in foods:
-#         if food[3] == food_class:
-#             sorted_foods.append(food)
-#     return sorted_foods
-# breakfast_primaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Primary')
-# breakfast_secondaries: List[Tuple[str or float]] = sort_by_class(breakfasts, 'FoodClass.Secondary')
-# supper_primaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Primary')
-# supper_secondaries: List[Tuple[str or float]] = sort_by_class(suppers, 'FoodClass.Secondary')
-
-# def random_food(list: List[Tuple[str or float]]) -> List[Any]:
-#     food: Tuple[str or float] = list[randint(0, len(list) - 1)]
-#     food_name: str = food[1]
-#     food_price: float = food[4]
-#     return [food_name, food_price]
-
-# total_days: int = 30
-# date: int = 1
-
-# month = '11'
-# year = '2020'
-# def what_day(day: str, month: str, year: str) -> str:
-#     return datetime.date(int(year), int(month), int(day)).strftime('%A')
-
-# while date <= total_days:
-#     breakfast_primary = random_food(breakfast_primaries)
-#     breakfast_secondary = random_food(breakfast_secondaries)
-#     supper_primary = random_food(supper_primaries)
-#     supper_secondary = random_food(supper_secondaries)
-
-
-#     meal: Dict[str, Any] = {
-#         'date': date,
-#         'day': what_day(str(date), '11', '2020'),
-#         'breakfast_primary': breakfast_primary[0],
-#         'breakfast_secondary': breakfast_secondary[0],
-#         'breakfast_price': breakfast_primary[1] + breakfast_secondary[1],
-#         'supper_primary': supper_primary[0],
-#         'supper_secondary': supper_secondary[0],
-#         'supper_price': supper_primary[1] + supper_secondary[1],
-#         'day_price': breakfast_primary[1] + breakfast_secondary[1] + supper_primary[1] + supper_secondary[1],
-#     }
-#     db_access.add_food_to_month(meal=meal, month='November', year=2020)
-#     date += 1
-
-
-#%%
-# s = 'String'
-# print(s)
-#%%
