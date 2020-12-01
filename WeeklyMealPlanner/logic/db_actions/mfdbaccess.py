@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Tuple
-from WeeklyMealPlanner.logic.db_actions.dbcommand import DBCommand
+from dbcommand import DBCommand
 
 
 class MonthFormatDatabaseAccess(DBCommand):

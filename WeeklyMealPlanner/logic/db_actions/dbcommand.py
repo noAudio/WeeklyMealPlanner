@@ -1,6 +1,6 @@
 from sqlite3.dbapi2 import Cursor, IntegrityError, OperationalError
 from typing import Any, Dict, List, Tuple
-from WeeklyMealPlanner.logic.db_actions.dbconnection import DBConnection
+from dbconnection import DBConnection
 
 
 class DBCommand(DBConnection):
