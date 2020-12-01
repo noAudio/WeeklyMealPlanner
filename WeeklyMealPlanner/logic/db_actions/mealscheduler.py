@@ -17,12 +17,16 @@ class MealScheduler(MonthFormatDatabaseAccess):
     _breakfasts: List[Tuple[str or float]]
 
     def __init__(self, month: str, year: int) -> None:
+        self.initial_setup(month=month, year=year)
+
+    def initial_setup(self, month: str, year: int) -> None:
         self._month_str = month
         self._month = datetime.datetime.strptime(self._month_str[:3], '%b').month
         self._year = year
         self._days = monthrange(self._year, self._month)[1]
         self._suppers = self.foods_by_foodtype('FoodType.Supper')
         self._breakfasts = self.foods_by_foodtype('FoodType.Breakfast')
+        pass
 
     def randomize_schedule(self) -> str:
         '''
