@@ -1,7 +1,7 @@
 from calendar import monthrange
 from random import randint
 from typing import Any, Dict, List, Tuple
-from WeeklyMealPlanner.logic.db_actions.mfdbaccess import MonthFormatDatabaseAccess
+from mfdbaccess import MonthFormatDatabaseAccess
 import datetime
 
 
@@ -47,7 +47,6 @@ class MealScheduler(MonthFormatDatabaseAccess):
                     supper_secondary = ["'Potatoes'", 40]
                 else:
                     supper_secondary = self._random_food(foods=supper_secondaries)
-                print(f'{date}, {supper_primary[0]} and {supper_secondary[0]}')
 
                 meal: Dict[str, Any] = {
                     'date': date,
