@@ -189,6 +189,9 @@ class DBCommand(DBConnection):
         return record
 
 class MonthFormatDatabaseAccess(DBCommand):
+    '''
+        Handles how data will be formatted and recorded into the database.
+    '''
     table_name: str
 
     def create_month(self, month: str, year: int) -> str:
@@ -303,7 +306,11 @@ class MealScheduler(MonthFormatDatabaseAccess):
                 breakfast_primary = self._random_food(foods=breakfast_primaries)
                 breakfast_secondary = self._random_food(foods=breakfast_secondaries)
                 supper_primary = self._random_food(foods=supper_primaries)
-                supper_secondary = self._random_food(foods=supper_secondaries)
+                if supper_primary[0] == "'Spaghetti'":
+                    supper_secondary = ["'Potatoes'", 40]
+                else:
+                    supper_secondary = self._random_food(foods=supper_secondaries)
+                print(f'{date}, {supper_primary[0]} and {supper_secondary[0]}')
 
                 meal: Dict[str, Any] = {
                     'date': date,
@@ -348,3 +355,6 @@ class MealScheduler(MonthFormatDatabaseAccess):
         Pass in a specific date and you will get its corresponding day e.g 04/11/2020 will return Wednesday.
         '''
         return datetime.date(int(year), int(month), int(day)).strftime('%A')
+
+mealscheduler: MealScheduler = MealScheduler(month='December', year=2020)
+print(mealscheduler.randomize_schedule())
